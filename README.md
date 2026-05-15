@@ -1,2 +1,417 @@
-# Appdan
-Mid
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>롤 미드 라이너 성향 테스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .btn-option {
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-option:hover {
+            transform: translateY(-2px);
+            background-color: #1e293b;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            transition: width 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-2xl bg-slate-800 rounded-2xl shadow-2xl p-6 sm:p-10 border border-slate-700">
+        
+        <!-- 시작 화면 -->
+        <div id="screen-intro" class="text-center fade-in">
+            <h1 class="text-3xl sm:text-4xl font-bold text-blue-400 mb-4">그라운드의 지휘관 찾기</h1>
+            <h2 class="text-xl sm:text-2xl font-semibold mb-6">나에게 맞는 완벽한 미드 챔피언은?</h2>
+            <p class="text-slate-300 mb-8 leading-relaxed">
+                현재 메타의 모든 미드 챔피언을 7가지의 축구 전술과 플레이 스타일로 분류했습니다.<br>
+                총 30개의 디테일한 상황 문항을 통해 당신의 뇌지컬, 피지컬, 그리고 무의식적인 플레이 성향을 분석합니다.
+            </p>
+            <button onclick="startQuiz()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-blue-500/50 transition-all text-lg w-full sm:w-auto">
+                테스트 시작하기
+            </button>
+        </div>
+
+        <!-- 퀴즈 화면 -->
+        <div id="screen-quiz" class="hidden fade-in">
+            <div class="mb-6">
+                <div class="flex justify-between text-sm text-slate-400 mb-2">
+                    <span id="question-progress">진행도: 1 / 30</span>
+                    <span id="question-percent">0%</span>
+                </div>
+                <div class="w-full bg-slate-700 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <h3 id="question-text" class="text-xl sm:text-2xl font-bold mb-8 min-h-[5rem] flex items-center">
+                질문이 여기에 표시됩니다.
+            </h3>
+            
+            <div id="options-container" class="space-y-4">
+                <!-- 버튼들이 여기에 동적으로 생성됩니다. -->
+            </div>
+        </div>
+
+        <!-- 결과 화면 -->
+        <div id="screen-result" class="hidden fade-in">
+            <div class="text-center mb-8">
+                <p class="text-blue-400 font-semibold mb-2">당신의 플레이 스타일 전술 분석 결과</p>
+                <h2 id="result-title" class="text-3xl sm:text-4xl font-bold mb-2">결과 타이틀</h2>
+                <h3 id="result-subtitle" class="text-xl text-slate-300 mb-6">서브 타이틀</h3>
+                
+                <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6 text-left">
+                    <h4 class="text-blue-400 font-bold mb-2">핵심 전술</h4>
+                    <p id="result-tactic" class="text-slate-200 mb-4">전술 설명</p>
+                    
+                    <h4 class="text-blue-400 font-bold mb-2">통계적 특징 및 플레이 조언</h4>
+                    <p id="result-desc" class="text-slate-200 leading-relaxed">상세 설명</p>
+                </div>
+
+                <div class="bg-blue-900/30 rounded-xl p-6 border border-blue-800 mb-8 text-left">
+                    <h4 class="text-blue-400 font-bold mb-2">맞춤 추천 챔피언 라인업</h4>
+                    <p id="result-champs" class="text-lg font-semibold text-white">챔피언 목록</p>
+                </div>
+
+                <button onclick="location.reload()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-8 rounded-full transition-all text-lg w-full sm:w-auto">
+                    테스트 다시하기
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 카테고리 정의 (A~G)
+        const categories = {
+            "A": {
+                title: "정석의 미학, 통제하는 사령관",
+                subtitle: "AP 컨트롤 메이지",
+                tactic: "포지셔널 플레이 & 티키타카 (중원 장악 및 패스워크)",
+                desc: "분당 CS 최상위권! 게임을 지휘하는 완벽한 뇌지컬의 소유자입니다. 높은 점유율을 바탕으로 라인을 밀어넣고, 정교한 거리 조절로 상대의 숨통을 조입니다. 게임 시간 25분 이후 승률이 급상승하며 한타 시 안정적인 지속 딜링이 핵심입니다.",
+                champs: "오리아나, 신드라, 아지르, 빅토르, 흐웨이, 애니비아, 탈리야, 아우렐리온 솔, 말자하"
+            },
+            "B": {
+                title: "거리를 지배하는 스나이퍼",
+                subtitle: "AP 포킹 / 아틸러리 메이지",
+                tactic: "롱볼 축구 & 세트피스 스페셜리스트",
+                desc: "시야 점수와 킬 관여율이 높으나 피격 데미지는 극도로 낮아야 하는 정교한 포지셔닝의 달인입니다. 후방에서 긴 사거리를 이용해 상대 방어벽을 무너뜨리는 롱패스와 중거리 슛에 능하며, 오브젝트 대치 구도에서 가장 강력합니다.",
+                champs: "제라스, 벨코즈, 직스, 럭스, 조이, 카르마, 세라핀"
+            },
+            "C": {
+                title: "멈추지 않는 엔진, 인파이터",
+                subtitle: "AP 배틀 메이지 및 근접 브루저",
+                tactic: "게겐 프레싱 & 박스 투 박스 미드필더",
+                desc: "받은 피해량과 가한 피해량이 동시에 높은 전투광입니다. 상대와 끊임없이 부딪히며 체력전을 유도하고, 강한 전방 압박으로 적의 실수를 유발합니다. 난전에서의 생존력과 클러치 능력이 게임의 승패를 가릅니다.",
+                champs: "사일러스, 카시오페아, 블라디미르, 라이즈, 스웨인, 갈리오, 그라가스, 아리, 럼블"
+            },
+            "D": {
+                title: "어둠 속의 암살자, 게임 체인저",
+                subtitle: "AP 암살자",
+                tactic: "라인 브레이커 & 펄스 나인 (침투형 공격수)",
+                desc: "CS 지표는 다소 낮을지 몰라도, 15-20분 구간 킬 캐치율과 로밍 성공률이 압도적입니다. 하이 리스크 하이 리턴을 즐기며, 수비 라인의 맹점을 파고들어 순식간에 적 주요 딜러를 끊어내는 암살에 특화되어 있습니다.",
+                champs: "아칼리, 카타리나, 에코, 피즈, 르블랑, 다이애나, 카사딘, 니코"
+            },
+            "E": {
+                title: "그림자를 다루는 처형인",
+                subtitle: "AD 암살자",
+                tactic: "카운터 어택 & 측면 윙포워드",
+                desc: "초중반 스노우볼링의 제왕입니다. 방관 아이템 효율이 극대화되는 타이밍에 게임을 터뜨려야 합니다. 라인을 빠르게 밀고 시야에서 사라진 뒤, 사이드나 정글에서 수적 우위를 만들어내는 역습의 대가입니다.",
+                champs: "제드, 탈론, 키아나, 나아피리, 파이크"
+            },
+            "F": {
+                title: "한계가 없는 무력, 고독한 무사",
+                subtitle: "AD 근접 스커미셔 / 전사",
+                tactic: "토털 사커 & 크랙 (독보적 에이스)",
+                desc: "개인의 피지컬에 따라 데스 수치 편차가 극심한 하드 캐리형 유저입니다. 사이드 푸쉬 및 1대1 교전 승률이 최상위권입니다. 압도적인 개인 기량(드리블)으로 상대 진형을 붕괴시키며 변수를 창출합니다.",
+                champs: "요네, 야스오, 이렐리아, 판테온, 트린다미어, 클레드"
+            },
+            "G": {
+                title: "넥서스 파괴 전차, 최후의 보루",
+                subtitle: "AD 원거리 딜러 / 마크스맨",
+                tactic: "컷백 피니셔 & 타겟맨 (메인 스트라이커)",
+                desc: "포탑 철거 속도 및 오브젝트 컨트롤 1위입니다. 팀의 화력을 책임지는 메인 스트라이커 역할을 합니다. 라인 주도권을 꽉 잡고 지속적인 슈팅(평타)으로 포탑과 적의 탱커 라인을 차례대로 철거합니다.",
+                champs: "트리스타나, 루시안, 코르키, 스몰더, 이즈리얼, 아크샨"
+            }
+        };
+
+        // 30개 문항 데이터
+        const questions = [
+            // 제1장: 라인전
+            { q: "1. 게임 시작 후 1레벨, 당신의 가장 이상적인 포지셔닝은?", options: [
+                { text: "상대 스킬 거리를 내주지 않고 안정적으로 CS만 챙긴다.", type: ["A", "B"] },
+                { text: "긴 사거리 스킬을 이용해 CS를 먹으려는 적을 계속 괴롭힌다.", type: ["B", "A"] },
+                { text: "1레벨부터 거리를 좁혀 평타와 스킬을 섞어가며 거칠게 딜교환을 건다.", type: ["C", "F"] },
+                { text: "웨이브를 빠르게 밀어버리고 상대 정글이나 시야를 먼저 확인한다.", type: ["D", "E", "G"] }
+            ]},
+            { q: "2. 첫 대포 미니언 웨이브가 도착했습니다. 당신의 웨이브 관리 전략은?", options: [
+                { text: "당겨서 먹으며 정글러의 갱킹(수비적 역습)을 기다린다.", type: ["C"] },
+                { text: "천천히 빅웨이브를 쌓아 상대 타워에 박아넣고 압박(티키타카)한다.", type: ["A", "B"] },
+                { text: "스킬을 쏟아부어 순식간에 지우고 시야에서 사라져 압박감을 준다.", type: ["D", "E"] },
+                { text: "상대와 몸을 비비며 딜교환을 해 상대가 대포를 놓치게 만든다.", type: ["F"] }
+            ]},
+            { q: "3. 상대가 스킬을 허공에 낭비했습니다. 당신의 다음 행동은?", options: [
+                { text: "앞으로 나가 디나이(경험치/CS 차단)를 하며 천천히 이득을 본다.", type: ["A"] },
+                { text: "멀리서 내 스킬을 확정적으로 맞춰 체력 이득만 깔끔하게 본다.", type: ["B"] },
+                { text: "즉시 이동기나 점멸을 써서 진입해 킬 각을 본다.", type: ["D", "E", "F"] },
+                { text: "상대 스킬이 빠졌으니 마음 편하게 내 대포 미니언과 CS를 다 챙긴다.", type: ["G"] }
+            ]},
+            { q: "4. 아군 정글러가 미드 근처 바위게에서 싸움을 열었습니다.", options: [
+                { text: "라인 손실이 있더라도 즉시 합류하여 수적 우위를 만든다.", type: ["C", "E", "F"] },
+                { text: "내 스킬 사거리 끝자락에서 안전하게 지원 사격만 해준다.", type: ["B"] },
+                { text: "라인을 먼저 타워에 박아넣고 천천히 합류한다.", type: ["A", "G"] },
+                { text: "교전은 정글에게 맡기고, 이 틈에 상대 타워나 킬 각을 혼자 노린다.", type: ["D"] }
+            ]},
+            { q: "5. 평소 라인전에서 가장 선호하는 딜교환 방식은?", options: [
+                { text: "일방적으로 나만 때릴 수 있는 이기적인 사거리 싸움.", type: ["B"] },
+                { text: "평타와 스킬을 촘촘히 섞는 지속적이고 섬세한 누적 딜링.", type: ["A", "G"] },
+                { text: "콤보를 한 번에 우겨넣고 빠져나오는 이기적인 폭딜.", type: ["D", "E"] },
+                { text: "상대의 주요 스킬을 내 움직임으로 회피한 직후 거칠게 두들겨 패기.", type: ["F", "C"] }
+            ]},
+            { q: "6. 귀환 후 첫 아이템을 구매할 때, 가장 기분 좋은 스탯은?", options: [
+                { text: "양피지나 여눈 같은 든든한 마나와 주문력.", type: ["A", "B"] },
+                { text: "톱날 단검 같은 방어구 관통력과 공격력.", type: ["E"] },
+                { text: "광전사의 군화나 공격 속도, 피흡 아이템.", type: ["F", "G"] },
+                { text: "기동력의 장화나 암흑의 인장 같은 변수 창출 아이템.", type: ["D", "C"] }
+            ]},
+            { q: "7. 적 미드 라이너가 로밍을 떠났습니다. 당신의 대처는?", options: [
+                { text: "미아 핑을 찍고 미드 타워를 부숴버리거나 포탑 방패를 뜯는다.", type: ["G", "A"] },
+                { text: "안전한 경로로 뒤따라가 합류 교전을 본다.", type: ["C"] },
+                { text: "멀리서 궁극기나 포킹 스킬로 합류 교전만 지원한다.", type: ["B"] },
+                { text: "반대편 라인으로 역로밍을 가서 변수를 만들거나 적 정글을 턴다.", type: ["D", "E", "F"] }
+            ]},
+            { q: "8. 나보다 라인전 상성이 강한 카운터 픽을 만났습니다.", options: [
+                { text: "CS를 버리더라도 절대 죽지 않으며 후반을 도모한다.", type: ["A", "B", "G"] },
+                { text: "정글러를 끊임없이 호출하여 2대1 상황을 만든다.", type: ["C"] },
+                { text: "라인전을 포기하고 로밍으로 다른 라인을 푼다.", type: ["D", "E"] },
+                { text: "피지컬로 상성을 극복할 수 있다고 믿고 공격적으로 맞붙는다.", type: ["F"] }
+            ]},
+            { q: "9. 갱킹 회피(탈압박) 상황에서 가장 자신 있는 대처법은?", options: [
+                { text: "이동기를 활용해 적진을 요리조리 빠져나가는 화려한 플레이.", type: ["D", "F"] },
+                { text: "들어오는 적 정글러에게 CC기를 정확히 맞추고 걸어나가기.", type: ["A", "B", "C"] },
+                { text: "갱킹이 오기 전에 미리 와드를 철저히 박아두어 원천 차단하기.", type: ["G"] },
+                { text: "타워를 끼고 2대1을 오히려 역으로 잡아내는 슈퍼 플레이.", type: ["E", "F"] }
+            ]},
+            { q: "10. 10분경, 당신의 CS 상태는 보통 어느 정도를 목표로 합니까?", options: [
+                { text: "분당 9~10개에 가까운 완벽한 수급.", type: ["A", "B", "G"] },
+                { text: "CS는 좀 놓치더라도 상대방과 킬을 교환해 난전 유도.", type: ["C", "E", "F"] },
+                { text: "CS보다 로밍 점수나 킬 관여율이 더 중요함.", type: ["D"] }
+            ]},
+            // 제2장: 중반 운영
+            { q: "11. 첫 번째 포탑이 밀리고 게임이 중반으로 넘어갔습니다. 당신이 서고 싶은 위치는?", options: [
+                { text: "미드 본대에 남아 라인을 지우고 오브젝트 시야를 돕는다.", type: ["A", "B", "G"] },
+                { text: "탑이나 바텀 사이드 라인으로 가서 1대1 무력을 과시한다.", type: ["F", "C"] },
+                { text: "적 정글 깊숙한 곳에 숨어 지나가는 적을 암살한다.", type: ["D", "E"] }
+            ]},
+            { q: "12. 용(드래곤) 한타 1분 전, 당신의 최우선 과제는?", options: [
+                { text: "긴 사거리로 적들의 체력을 미리 깎아놓는다.", type: ["B"] },
+                { text: "사이드 라인을 밀어 적 한 명을 부른 뒤 텔레포트나 이동기로 합류한다.", type: ["E", "F"] },
+                { text: "렌즈를 돌리며 적 딜러진의 측면이나 후방 포지션을 잡는다.", type: ["D"] },
+                { text: "팀원들과 뭉쳐서 정면에서 들어오는 적을 받아칠 준비를 한다.", type: ["A", "C", "G"] }
+            ]},
+            { q: "13. 팀의 원거리 딜러가 매우 잘 컸습니다. 당신의 포지셔닝은?", options: [
+                { text: "내가 보조(CC기, 쉴드 등)하여 원딜을 지키는 역할을 한다.", type: ["A", "C"] },
+                { text: "원딜에게 어그로가 끌린 틈을 타 내가 적을 측면에서 쓸어담는다.", type: ["E", "F"] },
+                { text: "원딜이 죽기 전에 적 주요 딜러를 내가 먼저 암살한다.", type: ["D", "B"] }
+            ]},
+            { q: "14. 당신이 선호하는 중반 데미지 딜링 방식은?", options: [
+                { text: "순간적으로 상대방의 반응속도를 무시하는 폭발적인 콤보.", type: ["D", "E"] },
+                { text: "지속적으로 상대방을 갉아먹는 안정적인 원거리 스킬 딜링.", type: ["A", "B"] },
+                { text: "적진 한가운데로 들어가 광역 데미지를 입히고 체력을 흡수하며 버티기.", type: ["C", "F"] },
+                { text: "압도적인 평타 DPS로 상대방 앞라인부터 차례대로 녹이기.", type: ["G"] }
+            ]},
+            { q: "15. 존야의 모래시계나 수호천사라는 아이템을 대하는 태도는?", options: [
+                { text: "상대의 치명적인 스킬을 한 턴 씹고 어그로를 핑퐁하는 용도.", type: ["A", "B", "D"] },
+                { text: "적진에 들어가서 스킬을 다 쏟은 뒤 생존을 구걸하는 용도.", type: ["C", "E"] },
+                { text: "안 죽고 내 지속 딜링을 한 번이라도 더 넣기 위한 철저한 보험.", type: ["G"] },
+                { text: "이런 방어적인 템보다 공격 템을 더 올려서 찍어 누르는 게 좋다.", type: ["F"] }
+            ]},
+            { q: "16. 적진 시야가 없는 상태, 바론 쪽이 수상합니다. 어떻게 확인할 것인가요?", options: [
+                { text: "멀리서 스킬을 던져 시야만 체크하고 빠진다.", type: ["A", "B", "G"] },
+                { text: "피지컬을 믿고 내가 직접 앞장서서 부쉬를 페이스체킹 한다.", type: ["C", "F"] },
+                { text: "벽 너머나 뒤쪽으로 돌아가 적의 꼬리를 노린다.", type: ["D", "E"] }
+            ]},
+            { q: "17. 라인전이 끝난 후 골드 수급의 핵심 원천은 무엇이라고 생각하나요?", options: [
+                { text: "정글 몹과 빈 라인의 CS를 긁어모으는 철저한 파밍.", type: ["A", "B", "G"] },
+                { text: "끊임없는 소규모 교전과 킬, 어시스트 챙기기.", type: ["D", "E"] },
+                { text: "타워를 철거하거나 사이드를 밀어서 얻는 골드.", type: ["F", "C"] }
+            ]},
+            { q: "18. 상대방 5명이 미드로 뭉쳐서 푸쉬를 시도합니다.", options: [
+                { text: "타워 근처에서 광역 스킬로 미니언만 지우며 우주방어를 한다.", type: ["A", "B", "G"] },
+                { text: "수비는 팀에게 맡기고 나는 사이드 억제기를 밀러 간다.", type: ["F", "E"] },
+                { text: "상대가 방심한 틈을 타 측면에서 기습 이니시에이팅을 연다.", type: ["C", "D"] }
+            ]},
+            { q: "19. 게임이 불리하게 흘러갈 때, 역전의 발판은 어떻게 마련하나요?", options: [
+                { text: "후반을 바라보며 최대한 데스를 줄이고 코어템을 띄운다.", type: ["A", "B", "G"] },
+                { text: "적이 방심하고 혼자 라인을 밀 때 잘라먹기를 시도한다.", type: ["D", "E"] },
+                { text: "오브젝트 교전에서 무리해서라도 한타 대박을 노린다.", type: ["C", "F"] }
+            ]},
+            { q: "20. 아군 서포터가 시야 장악에 어려움을 겪습니다. 당신은?", options: [
+                { text: "내 제어 와드를 같이 사서 본대 주변 시야만 확실히 잡는다.", type: ["A", "B", "G"] },
+                { text: "기동력을 살려 서포터와 함께 적 정글을 헤집고 다닌다.", type: ["D", "E", "F"] },
+                { text: "시야가 없으면 철저하게 사리며 포탑 밖으로 나가지 않는다.", type: ["C"] }
+            ]},
+            // 제3장: 한타 및 심리
+            { q: "21. 5대5 한타가 열렸습니다. 당신이 가장 먼저 타겟팅하는 대상은?", options: [
+                { text: "나에게 가장 위협적으로 달려오는 적 브루저나 탱커부터 차례대로.", type: ["A", "G", "C"] },
+                { text: "적의 핵심 딜러(원딜/미드)를 무슨 수를 써서라도 먼저 노린다.", type: ["D", "E", "F"] },
+                { text: "적이 뭉친 곳에 광역 딜을 쏟아부어 진형 자체를 붕괴시킨다.", type: ["B"] }
+            ]},
+            { q: "22. 한타 중 나의 사망은 어떤 의미인가요?", options: [
+                { text: "내가 죽으면 팀의 딜이 없으므로 절대 죽어선 안 된다.", type: ["A", "B", "G"] },
+                { text: "적 핵심 딜러 1~2명과 교환했다면 내 역할은 다 한 것이다.", type: ["D", "E"] },
+                { text: "적의 모든 궁극기와 스킬을 빼고 난장판을 만들었다면 충분하다.", type: ["C", "F"] }
+            ]},
+            { q: "23. 자신이 생각하는 '피지컬이 좋다'의 정의는?", options: [
+                { text: "복잡한 콤보와 평타 캔슬을 손 꼬임 없이 0.1초 만에 욱여넣는 손속도.", type: ["F"] },
+                { text: "상대의 스킬 궤적을 보고 마우스 무빙만으로 피하며 카이팅하는 동체시력.", type: ["G", "A"] },
+                { text: "맵 리딩, 데미지 계산, 진입 각을 재는 뇌지컬과 결단력.", type: ["B", "C", "D", "E"] }
+            ]},
+            { q: "24. 당신이 게임을 할 때 가장 희열을 느끼는 순간은?", options: [
+                { text: "적의 예측을 벗어난 매복으로 0.5초 만에 상대를 삭제했을 때.", type: ["D", "E"] },
+                { text: "딸피로 아슬아슬하게 살아남아 지속딜을 욱여넣어 역관광을 시킬 때.", type: ["C"] },
+                { text: "CS 차이를 압도적으로 벌리고 레벨 차이로 상대를 숨 못 쉬게 할 때.", type: ["A", "B", "G"] },
+                { text: "1대2, 1대3 상황에서 화려한 무빙으로 적을 모두 썰어버릴 때.", type: ["F"] }
+            ]},
+            { q: "25. 선호하는 데미지 타입과 템트리는?", options: [
+                { text: "AP 마법 데미지 폭발 (라바돈의 죽음모자, 공허의 지팡이)", type: ["A", "B"] },
+                { text: "AD 물리 데미지 폭발 (방관템, 무한의 대검, 징수의 총)", type: ["E", "G"] },
+                { text: "공수 밸런스 / 지속 교전 (존야, 정복자, 스테락 등)", type: ["C", "F", "D"] }
+            ]},
+            { q: "26. 롤을 축구 포지션에 비유한다면 당신이 뛰고 싶은 위치는?", options: [
+                { text: "정확한 패스와 조율로 게임을 통제하는 중앙 미드필더.", type: ["A", "B"] },
+                { text: "폭발적인 스피드로 라인을 부수고 득점하는 윙포워드.", type: ["D", "E"] },
+                { text: "압도적인 발재간으로 상대 수비를 농락하는 크랙/공격수.", type: ["F", "C"] },
+                { text: "기회가 오면 놓치지 않고 강력한 슈팅을 때리는 타겟맨.", type: ["G"] }
+            ]},
+            { q: "27. 팀원과의 소통(핑, 채팅) 방식은 어떤가요?", options: [
+                { text: "철저하게 오더를 내리고 팀원들이 내 판에 맞춰주길 바란다.", type: ["A"] },
+                { text: "팀원들의 오더에 잘 따라가며 내 포지셔닝에만 집중한다.", type: ["B", "G"] },
+                { text: "채팅은 끄고 오로지 내 직감과 피지컬, 판단만 믿는다.", type: ["D", "E", "F", "C"] }
+            ]},
+            { q: "28. 패배했을 때 가장 화가 나는 상황은?", options: [
+                { text: "나는 라인전을 이기고 성장했는데 다른 라인이 터져서 졌을 때.", type: ["A", "B", "G"] },
+                { text: "팀원들이 내 이니시에이팅이나 핑에 호응해주지 않았을 때.", type: ["C", "F"] },
+                { text: "내가 무리해서 진입했다가 허무하게 짤려서 역전당했을 때.", type: ["D", "E"] }
+            ]},
+            { q: "29. 적 정글러가 미드만 집요하게 10번 연속 갱을 옵니다. 당신의 멘탈은?", options: [
+                { text: "'나한테 턴을 빼면 우리 팀이 유리해진다'며 웃으며 타워 허그를 한다.", type: ["A", "C"] },
+                { text: "분노하며 우리 정글을 부르고, 역으로 2대2 교전을 열려고 한다.", type: ["F", "E"] },
+                { text: "조용히 아군 정글 몹을 빼먹거나 다른 라인으로 도망가서 이득을 본다.", type: ["D", "B", "G"] }
+            ]},
+            { q: "30. 궁극적으로 이 게임(LoL)을 승리하는 가장 확실한 방법은 무엇입니까?", options: [
+                { text: "실수를 줄이고 골드 격차를 벌려 압도적인 스탯으로 찍어 누르는 정석 플레이.", type: ["A", "B", "G"] },
+                { text: "한 번의 날카로운 잘라먹기나 바론 스틸 등 과감한 변수 창출.", type: ["D", "E"] },
+                { text: "상대보다 압도적인 피지컬로 한타를 지배하는 슈퍼 플레이.", type: ["C", "F"] }
+            ]}
+        ];
+
+        let currentQIndex = 0;
+        let scores = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, G: 0 };
+
+        const introScreen = document.getElementById('screen-intro');
+        const quizScreen = document.getElementById('screen-quiz');
+        const resultScreen = document.getElementById('screen-result');
+        const qText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const qProgress = document.getElementById('question-progress');
+        const qPercent = document.getElementById('question-percent');
+        const progressBar = document.getElementById('progress-bar');
+
+        function startQuiz() {
+            introScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const qData = questions[currentQIndex];
+            
+            // 상단 진행바 업데이트
+            qProgress.textContent = `진행도: ${currentQIndex + 1} / ${questions.length}`;
+            const percent = Math.round(((currentQIndex) / questions.length) * 100);
+            qPercent.textContent = `${percent}%`;
+            progressBar.style.width = `${percent}%`;
+
+            qText.textContent = qData.q;
+            optionsContainer.innerHTML = '';
+
+            // 버튼 애니메이션 재설정용
+            optionsContainer.classList.remove('fade-in');
+            void optionsContainer.offsetWidth; // trigger reflow
+            optionsContainer.classList.add('fade-in');
+
+            qData.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left bg-slate-800 border border-slate-600 text-slate-200 p-4 rounded-xl hover:bg-slate-700 btn-option text-sm sm:text-base';
+                btn.textContent = opt.text;
+                // opt.type (배열)을 JSON으로 전달
+                btn.onclick = () => selectOption(opt.type);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(types) {
+            // 선택된 타입들에 점수 +1 부여
+            types.forEach(t => {
+                if (scores[t] !== undefined) scores[t] += 1;
+            });
+
+            currentQIndex++;
+            
+            if (currentQIndex < questions.length) {
+                renderQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            
+            // 최종 프로그레스 100%
+            progressBar.style.width = `100%`;
+
+            // 최고 점수 카테고리 찾기
+            let maxType = 'A';
+            let maxScore = -1;
+            
+            for (const key in scores) {
+                if (scores[key] > maxScore) {
+                    maxScore = scores[key];
+                    maxType = key;
+                }
+            }
+
+            const resData = categories[maxType];
+
+            document.getElementById('result-title').textContent = resData.title;
+            document.getElementById('result-subtitle').textContent = resData.subtitle;
+            document.getElementById('result-tactic').textContent = resData.tactic;
+            document.getElementById('result-desc').textContent = resData.desc;
+            document.getElementById('result-champs').textContent = resData.champs;
+        }
+    </script>
+</body>
+</html>
+
+```
